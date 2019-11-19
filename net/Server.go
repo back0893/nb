@@ -32,21 +32,17 @@ func (s *Server) Server() {
 	if err != nil {
 		return
 	}
+	utils.LoggerObject.Write(fmt.Sprintf("%s启动成功", host))
+	var connId uint64 = 0
 	for {
 		conn, err := server.AcceptTCP()
+		connId++
 		if err != nil {
 			utils.LoggerObject.Write(err.Error())
 			return
 		}
-		go func(conn *net.TCPConn) {
-			data := make([]byte, 1024)
-			n, err := conn.Read(data)
-			if err != nil {
-				utils.LoggerObject.Write(err.Error())
-			}
-			utils.LoggerObject.Write(string(data[:n]))
-			conn.Write([]byte("ok"))
-		}(conn)
+		connection := NewConnection(connId, conn)
+		go connection.Start()
 	}
 }
 
