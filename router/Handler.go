@@ -2,7 +2,7 @@ package router
 
 import (
 	"Nb/iface"
-	"Nb/utils"
+	"log"
 )
 
 type Handler struct {
@@ -13,6 +13,6 @@ func NewHandler() iface.IRouter {
 	return &Handler{}
 }
 func (hand *Handler) Handle(request iface.IRequest) {
-	utils.LoggerObject.Write(string(request.GetData()))
-	request.GetConnection().Write(request.GetData())
+	log.Println(request.GetMsg())
+	request.GetConnection().Write(request.GetMsg().Marshal())
 }

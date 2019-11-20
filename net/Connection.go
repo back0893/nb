@@ -2,9 +2,12 @@ package net
 
 import (
 	"Nb/iface"
+	"Nb/message"
 	"Nb/utils"
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"net"
 )
 
@@ -51,9 +54,30 @@ func (c *Connection) StartRead() {
 	defer c.Stop()
 	defer utils.LoggerObject.Write(fmt.Sprintf("%d连接退出", c.connId))
 	scan := bufio.NewScanner(c.conn)
+	scan.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if len(data) == 0 && atEOF == true {
+			return 0, nil, io.EOF
+		}
+		start_index := bytes.IndexByte(data, '{')
+		end_index := bytes.IndexByte(data, '}')
+		if atEOF == true && (start_index == -1 || end_index == -1) {
+			return 0, nil, io.EOF
+		}
+		if start_index == -1 || end_index == -1 {
+			return 0, nil, nil
+		}
+		if start_index > end_index {
+			//异常的流,寻找下一个争取的包
+			return end_index + 1, nil, nil
+		}
+		return end_index + 1, data[start_index+1 : end_index], nil
+	})
 	for scan.Scan() {
 		data := scan.Bytes()
-		request := NewRequest(c, data)
+		msg := message.NewMessage()
+		err := msg.UnmarshalUn(data)
+		fmt.Println(err)
+		request := NewRequest(c, msg)
 		if c.server.GetRouter() != nil {
 			go func(router iface.IRouter, iRequest iface.IRequest) {
 				router.PerHandle(request)

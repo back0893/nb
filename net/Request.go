@@ -4,13 +4,13 @@ import "Nb/iface"
 
 type Request struct {
 	connection iface.IConnection
-	data       []byte
+	msg        iface.IMessage
 }
 
-func NewRequest(connection iface.IConnection, data []byte) iface.IRequest {
+func NewRequest(connection iface.IConnection, message iface.IMessage) iface.IRequest {
 	return &Request{
 		connection: connection,
-		data:       data,
+		msg:        message,
 	}
 }
 
@@ -19,5 +19,9 @@ func (r *Request) GetConnection() iface.IConnection {
 }
 
 func (r *Request) GetData() []byte {
-	return r.data
+	return r.msg.GetData()
+}
+
+func (r *Request) GetMsg() iface.IMessage {
+	return r.msg
 }
