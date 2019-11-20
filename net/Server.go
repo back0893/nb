@@ -8,14 +8,15 @@ import (
 )
 
 type Server struct {
-	Host string
-	Port int
+	Host   string
+	Port   int
+	router iface.IRouter
 }
 
 func NewServer() iface.IServer {
 	return &Server{
-		Host: "0.0.0.0",
-		Port: 8001,
+		Host: utils.GlobalObject.Host,
+		Port: utils.GlobalObject.Port,
 	}
 }
 func (s *Server) Run() {
@@ -41,11 +42,17 @@ func (s *Server) Server() {
 			utils.LoggerObject.Write(err.Error())
 			return
 		}
-		connection := NewConnection(connId, conn)
+		connection := NewConnection(connId, conn, s)
 		go connection.Start()
 	}
 }
 
 func (Server) Stop() {
 	utils.LoggerObject.Write("服务器停止")
+}
+func (s *Server) AddRouter(router iface.IRouter) {
+	s.router = router
+}
+func (s *Server) GetRouter() iface.IRouter {
+	return s.router
 }

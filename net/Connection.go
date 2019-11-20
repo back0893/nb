@@ -13,14 +13,16 @@ type Connection struct {
 	connId   uint64
 	ExitChan chan bool
 	IsStop   bool
+	server   iface.IServer
 }
 
-func NewConnection(connId uint64, conn *net.TCPConn) iface.IConnection {
+func NewConnection(connId uint64, conn *net.TCPConn, server iface.IServer) iface.IConnection {
 	return &Connection{
 		conn:     conn,
 		connId:   connId,
 		ExitChan: make(chan bool),
 		IsStop:   false,
+		server:   server,
 	}
 }
 
@@ -51,8 +53,14 @@ func (c *Connection) StartRead() {
 	scan := bufio.NewScanner(c.conn)
 	for scan.Scan() {
 		data := scan.Bytes()
-		utils.LoggerObject.Write(string(data))
-		c.Write(append(data, '\n'))
+		request := NewRequest(c, data)
+		if c.server.GetRouter() != nil {
+			go func(router iface.IRouter, iRequest iface.IRequest) {
+				router.PerHandle(request)
+				router.Handle(request)
+				router.PostHandle(request)
+			}(c.server.GetRouter(), request)
+		}
 	}
 }
 func (c *Connection) Stop() {
