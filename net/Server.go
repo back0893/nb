@@ -20,6 +20,15 @@ func NewServer() iface.IServer {
 	}
 }
 func (s *Server) Run() {
+	//初始化db
+	db, err := utils.NewDb()
+	if err != nil {
+		panic("!连接数据库失败!")
+	}
+
+	utils.GlobalObject.Db = db
+	utils.GlobalObject.Server = s
+
 	s.Server()
 }
 
@@ -47,7 +56,8 @@ func (s *Server) Server() {
 	}
 }
 
-func (Server) Stop() {
+func (s *Server) Stop() {
+	utils.GlobalObject.Db.Close()
 	utils.LoggerObject.Write("服务器停止")
 }
 func (s *Server) AddRouter(router iface.IRouter) {
