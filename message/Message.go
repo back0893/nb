@@ -87,3 +87,7 @@ func (msg *Message) Marshal() []byte {
 	buffer.WriteByte('}')
 	return buffer.Bytes()
 }
+
+func (msg *Message) GetId() uint32 {
+	return 1
+}

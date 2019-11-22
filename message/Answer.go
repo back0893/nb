@@ -1,6 +1,8 @@
 package message
 
-import "bytes"
+import (
+	"bytes"
+)
 
 /**
 平台回应的因为格式不一样....
@@ -9,6 +11,10 @@ mdzz
 */
 type Answer struct {
 	rawData []byte
+}
+
+func (answer *Answer) GetId() uint32 {
+	return 3
 }
 
 func (answer *Answer) UnmarshalUn(data []byte) error {

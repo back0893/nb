@@ -7,7 +7,7 @@ import (
 
 func main() {
 	server := net.NewServer()
-	server.AddRouter(router.NewHandler())
+	server.AddRouter(1, router.NewHandler())
 	server.Run()
 
 }

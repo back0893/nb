@@ -11,6 +11,7 @@ type AutoNodeValue struct {
 	Type   int
 	Value  int
 	Time   time.Time
+	Alarm  int
 }
 
 func (AutoNodeValue) TableName() string {

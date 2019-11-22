@@ -18,7 +18,7 @@ func NewHandler() iface.IRouter {
 }
 func (hand *Handler) Handle(request iface.IRequest) {
 	hand.doMsg(request.GetMsg())
-	request.GetConnection().Write(request.GetMsg().Marshal())
+	request.GetConnection().SendBuffMsg(request.GetMsg().Marshal())
 }
 func (hand *Handler) doMsg(iMessage iface.IMessage) {
 	msg := iMessage.(*message.Message)
@@ -38,6 +38,7 @@ func (hand *Handler) doMsg(iMessage iface.IMessage) {
 		return
 	}
 	for _, pin := range pins {
+		utils.LoggerObject.Write(pin.Time.Format("2006-01-02T15:04:05"))
 		if pin.PinId == 1 {
 			//开关输入1
 			val, err := strconv.Atoi(msg.Switch1[1:])
@@ -54,20 +55,20 @@ func (hand *Handler) doMsg(iMessage iface.IMessage) {
 			pin.PinValue = val
 		} else if pin.PinId == 3 {
 			//开关输入3
-			val, err := strconv.ParseFloat(msg.Input1[1:6], 32)
+			val, err := strconv.Atoi(msg.Input1[1:])
 			if err != nil {
 				continue
 			}
-			pin.PinValue = int(val * 1000)
-			pin.Unit = "V"
+			pin.PinValue = val
+			pin.Unit = "mV"
 		} else if pin.PinId == 4 {
 			//开关输入4
-			val, err := strconv.ParseFloat(msg.Input2[1:6], 32)
+			val, err := strconv.Atoi(msg.Input2[1:])
 			if err != nil {
 				continue
 			}
-			pin.PinValue = int(val * 1000)
-			pin.Unit = "V"
+			pin.PinValue = val
+			pin.Unit = "mV"
 		}
 		pin.Time = time.Now()
 		db.Save(&pin)
@@ -78,6 +79,10 @@ func (hand *Handler) doMsg(iMessage iface.IMessage) {
 		node_value.Type = pin.Type
 		node_value.Value = pin.PinValue
 		node_value.Pin = int(pin.ID)
+		//对于开关量有一个额外的alarm参数
+		if pin.Type == 0 {
+			node_value.Alarm = node_value.Value
+		}
 		db.Create(&node_value)
 	}
 }

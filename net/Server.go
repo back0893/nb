@@ -8,15 +8,40 @@ import (
 )
 
 type Server struct {
-	Host   string
-	Port   int
-	router iface.IRouter
+	Host       string
+	Port       int
+	msgHandler iface.IMsgHandler
+	manager    iface.IConnManager
+	startHook  func(connection iface.IConnection)
+	stopHook   func(connection iface.IConnection)
+}
+
+func (s *Server) SetOnConnStart(hook func(connection iface.IConnection)) {
+	s.startHook = hook
+}
+
+func (s *Server) CallOnConnStart(connection iface.IConnection) {
+	if s.startHook != nil {
+		s.startHook(connection)
+	}
+}
+
+func (s *Server) SetOnConnStop(hook func(connection iface.IConnection)) {
+	s.stopHook = hook
+}
+
+func (s *Server) CallOnConnStop(connection iface.IConnection) {
+	if s.stopHook != nil {
+		s.stopHook(connection)
+	}
 }
 
 func NewServer() iface.IServer {
 	return &Server{
-		Host: utils.GlobalObject.Host,
-		Port: utils.GlobalObject.Port,
+		Host:       utils.GlobalObject.Host,
+		Port:       utils.GlobalObject.Port,
+		msgHandler: NewMsgHandler(),
+		manager:    NewConnManager(),
 	}
 }
 func (s *Server) Run() {
@@ -52,17 +77,23 @@ func (s *Server) Server() {
 			return
 		}
 		connection := NewConnection(connId, conn, s)
+		s.manager.Add(connection)
 		go connection.Start()
 	}
 }
 
 func (s *Server) Stop() {
 	utils.GlobalObject.Db.Close()
+	s.manager.ClearConn()
 	utils.LoggerObject.Write("服务器停止")
 }
-func (s *Server) AddRouter(router iface.IRouter) {
-	s.router = router
+func (s *Server) AddRouter(msgId uint32, router iface.IRouter) {
+	s.msgHandler.AddRouter(msgId, router)
 }
-func (s *Server) GetRouter() iface.IRouter {
-	return s.router
+func (s *Server) GetMsgRouter() iface.IMsgHandler {
+	return s.msgHandler
+}
+
+func (s *Server) GetManager() iface.IConnManager {
+	return s.manager
 }

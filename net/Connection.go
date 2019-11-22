@@ -12,20 +12,24 @@ import (
 )
 
 type Connection struct {
-	conn     *net.TCPConn
-	connId   uint64
-	ExitChan chan bool
-	IsStop   bool
-	server   iface.IServer
+	conn        *net.TCPConn
+	connId      uint64
+	ExitChan    chan bool
+	IsStop      bool
+	server      iface.IServer
+	msgChan     chan []byte
+	msgBuffChan chan []byte
 }
 
 func NewConnection(connId uint64, conn *net.TCPConn, server iface.IServer) iface.IConnection {
 	return &Connection{
-		conn:     conn,
-		connId:   connId,
-		ExitChan: make(chan bool),
-		IsStop:   false,
-		server:   server,
+		conn:        conn,
+		connId:      connId,
+		ExitChan:    make(chan bool),
+		IsStop:      false,
+		server:      server,
+		msgChan:     make(chan []byte),
+		msgBuffChan: make(chan []byte, 1024),
 	}
 }
 
@@ -40,7 +44,9 @@ func (c *Connection) GetConId() uint64 {
 	return c.connId
 }
 func (c *Connection) Start() {
+	c.server.CallOnConnStart(c)
 	go c.StartRead()
+	go c.StartWrite()
 	for {
 		select {
 		case <-c.ExitChan:
@@ -78,14 +84,32 @@ func (c *Connection) StartRead() {
 		err := msg.UnmarshalUn(data)
 		fmt.Println(err)
 		request := NewRequest(c, msg)
-		if c.server.GetRouter() != nil {
-			go func(router iface.IRouter, iRequest iface.IRequest) {
-				router.PerHandle(request)
-				router.Handle(request)
-				router.PostHandle(request)
-			}(c.server.GetRouter(), request)
+		go c.server.GetMsgRouter().DoMsgHandler(request)
+	}
+	<-c.ExitChan
+}
+func (c *Connection) StartWrite() {
+	for {
+		select {
+		case data := <-c.msgChan:
+			if _, err := c.conn.Write(data); err != nil {
+				utils.LoggerObject.Write(err.Error())
+			}
+		case data := <-c.msgBuffChan:
+			if _, err := c.conn.Write(data); err != nil {
+				utils.LoggerObject.Write(err.Error())
+			}
+		case <-c.ExitChan:
+			return
 		}
 	}
+}
+
+func (c *Connection) SendMsg(data []byte) {
+	c.msgChan <- data
+}
+func (c *Connection) SendBuffMsg(data []byte) {
+	c.msgBuffChan <- data
 }
 func (c *Connection) Stop() {
 	if c.IsStop {
@@ -94,5 +118,7 @@ func (c *Connection) Stop() {
 	c.IsStop = true
 	c.ExitChan <- true
 	close(c.ExitChan)
+	c.server.GetManager().Remove(c.connId)
+	c.server.CallOnConnStop(c)
 	c.conn.Close()
 }
