@@ -54,6 +54,8 @@ func (s *Server) Run() {
 	utils.GlobalObject.Db = db
 	utils.GlobalObject.Server = s
 
+	//启动worker处理池
+	s.msgHandler.StartWorkerPool()
 	s.Server()
 }
 

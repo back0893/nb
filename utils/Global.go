@@ -12,8 +12,10 @@ var GlobalObject *Global
 
 func init() {
 	GlobalObject = &Global{
-		Host: "127.0.0.1",
-		Port: 8001,
+		Host:               "127.0.0.1",
+		Port:               8001,
+		MaxWorkerSize:      4,
+		MaxWorkerQueueTask: 1024,
 	}
 	GlobalObject.Reload()
 }
@@ -27,11 +29,13 @@ type DB struct {
 	Params map[string]string `json:"params"`
 }
 type Global struct {
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Database *DB    `json:"database"`
-	Server   iface.IServer
-	Db       *gorm.DB
+	Host               string `json:"host"`
+	Port               int    `json:"port"`
+	Database           *DB    `json:"database"`
+	Server             iface.IServer
+	Db                 *gorm.DB
+	MaxWorkerSize      int `json:"worker_size"`
+	MaxWorkerQueueTask int `json:"queue_task"`
 }
 
 func (global *Global) Reload() {

@@ -2,6 +2,7 @@ package message
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -18,6 +19,10 @@ type Message struct {
 	Upload   int    //上传频率
 	Ack      int    //16进制的校验码
 	rawData  []byte //原始数据
+}
+
+func (msg *Message) String() string {
+	return fmt.Sprintf("配置")
 }
 
 func NewMessage() *Message {

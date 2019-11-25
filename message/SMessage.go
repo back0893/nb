@@ -12,9 +12,13 @@ import (
 type SMessage struct {
 	Record      int
 	Upload      int
-	VoltageRate float32 //电压波动
-	VoltageMax  float32 //电压上限
-	VoltageMin  float32 //电压下限
+	VoltageRate int //电压波动
+	VoltageMax  int //电压上限
+	VoltageMin  int //电压下限
+}
+
+func (msg SMessage) String() string {
+	return fmt.Sprintf("%s:%d:%d:P%dH%dL%d", "S", msg.Record, msg.Upload, msg.VoltageMax, msg.VoltageMax, msg.VoltageMin)
 }
 
 func (SMessage) UnmarshalUn([]byte) error {
@@ -24,7 +28,7 @@ func (SMessage) UnmarshalUn([]byte) error {
 func (msg *SMessage) Marshal() []byte {
 	buffer := bytes.NewBuffer([]byte{})
 	buffer.WriteByte('{')
-	str := fmt.Sprintf("%s:%d:%d:P%.3fH%.3fL%.3f", "S", msg.Record, msg.Upload, msg.VoltageMax, msg.VoltageMax, msg.VoltageMin)
+	str := msg.String()
 	buffer.WriteString(str)
 	buffer.WriteByte(' ')
 	buffer.WriteString(str)

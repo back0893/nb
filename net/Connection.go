@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync"
 )
 
 type Connection struct {
@@ -19,6 +20,28 @@ type Connection struct {
 	server      iface.IServer
 	msgChan     chan []byte
 	msgBuffChan chan []byte
+	lock        sync.RWMutex
+	property    map[string]interface{}
+}
+
+func (c *Connection) RemoveProperty(key string) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	delete(c.property, key)
+}
+
+func (c *Connection) SetProperty(key string, value interface{}) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	c.property[key] = value
+
+}
+
+func (c *Connection) GetProperty(key string) (interface{}, bool) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	t, ok := c.property[key]
+	return t, ok
 }
 
 func NewConnection(connId uint64, conn *net.TCPConn, server iface.IServer) iface.IConnection {
@@ -30,6 +53,7 @@ func NewConnection(connId uint64, conn *net.TCPConn, server iface.IServer) iface
 		server:      server,
 		msgChan:     make(chan []byte),
 		msgBuffChan: make(chan []byte, 1024),
+		property:    make(map[string]interface{}),
 	}
 }
 
@@ -80,11 +104,19 @@ func (c *Connection) StartRead() {
 	})
 	for scan.Scan() {
 		data := scan.Bytes()
-		msg := message.NewMessage()
+		msg := c.GetMessage(data)
+		if msg == nil {
+			utils.LoggerObject.Write("无法处理")
+			continue
+		}
 		err := msg.UnmarshalUn(data)
 		fmt.Println(err)
 		request := NewRequest(c, msg)
-		go c.server.GetMsgRouter().DoMsgHandler(request)
+		if utils.GlobalObject.MaxWorkerSize > 0 {
+			c.server.GetMsgRouter().SendMsgToTaskQueue(request)
+		} else {
+			go c.server.GetMsgRouter().DoMsgHandler(request)
+		}
 	}
 	<-c.ExitChan
 }
@@ -121,4 +153,21 @@ func (c *Connection) Stop() {
 	c.server.GetManager().Remove(c.connId)
 	c.server.CallOnConnStop(c)
 	c.conn.Close()
+}
+
+/**
+依据第一个判断返回需要返回的message
+*/
+func (c *Connection) GetMessage(data []byte) iface.IMessage {
+	switch data[0] {
+	case 'A':
+		if bytes.IndexByte(data, ',') != -1 {
+			return message.NewAnswerIp()
+		} else {
+			return message.NewAnswerOption()
+		}
+	case 'G':
+		return message.NewMessage()
+	}
+	return nil
 }
