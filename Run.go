@@ -10,5 +10,5 @@ func main() {
 	server.AddRouter(1, router.NewHandler())
 	server.AddRouter(2, router.NewAnswerHandler())
 	server.AddRouter(3, router.NewAnswerHandler())
-	go server.Run()
+	server.Run()
 }
