@@ -3,6 +3,7 @@ package net
 import (
 	"Nb/iface"
 	"Nb/utils"
+	"bufio"
 	"fmt"
 	"net"
 )
@@ -14,6 +15,15 @@ type Server struct {
 	manager    iface.IConnManager
 	startHook  func(connection iface.IConnection)
 	stopHook   func(connection iface.IConnection)
+	splitFunc  bufio.SplitFunc
+}
+
+func (s *Server) AddSplitFunc(splitFunc bufio.SplitFunc) {
+	s.splitFunc = splitFunc
+}
+
+func (s *Server) GetSplitFunc() bufio.SplitFunc {
+	return s.splitFunc
 }
 
 func (s *Server) SetOnConnStart(hook func(connection iface.IConnection)) {

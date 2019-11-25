@@ -83,7 +83,11 @@ func (c *Connection) Start() {
 func (c *Connection) StartRead() {
 	defer c.Stop()
 	defer utils.LoggerObject.Write(fmt.Sprintf("%d连接退出", c.connId))
+
 	scan := bufio.NewScanner(c.conn)
+
+	scan.Split(c.server.GetSplitFunc())
+
 	scan.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		if len(data) == 0 && atEOF == true {
 			return 0, nil, io.EOF
@@ -104,11 +108,7 @@ func (c *Connection) StartRead() {
 	})
 	for scan.Scan() {
 		data := scan.Bytes()
-		msg := c.GetMessage(data)
-		if msg == nil {
-			utils.LoggerObject.Write("无法处理")
-			continue
-		}
+		msg := message.NewMessage()
 		err := msg.UnmarshalUn(data)
 		fmt.Println(err)
 		request := NewRequest(c, msg)
@@ -138,6 +138,8 @@ func (c *Connection) StartWrite() {
 }
 
 func (c *Connection) SendMsg(data []byte) {
+	//这里可以最终的转义处理,新增头尾标志
+
 	c.msgChan <- data
 }
 func (c *Connection) SendBuffMsg(data []byte) {
@@ -153,21 +155,4 @@ func (c *Connection) Stop() {
 	c.server.GetManager().Remove(c.connId)
 	c.server.CallOnConnStop(c)
 	c.conn.Close()
-}
-
-/**
-依据第一个判断返回需要返回的message
-*/
-func (c *Connection) GetMessage(data []byte) iface.IMessage {
-	switch data[0] {
-	case 'A':
-		if bytes.IndexByte(data, ',') != -1 {
-			return message.NewAnswerIp()
-		} else {
-			return message.NewAnswerOption()
-		}
-	case 'G':
-		return message.NewMessage()
-	}
-	return nil
 }

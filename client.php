@@ -12,5 +12,5 @@ $client=stream_socket_client('tcp://127.0.0.1:10034');
 //fwrite($client,'{A:30:01:P1000H4000L1000}');
 //echo fread($client,5);
 
-fwrite($client,'{A:"111.222.333.444","1234"}');
-echo fread($client,5);
+fwrite($client,);
+echo fread($client,2);

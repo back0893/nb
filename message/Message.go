@@ -1,98 +1,84 @@
 package message
 
 import (
+	"Nb/iface"
+	"Nb/message/body"
 	"bytes"
-	"fmt"
-	"strconv"
-	"strings"
+	"encoding/binary"
 )
 
+type Header struct {
+	Len         uint32
+	SN          uint32
+	ID          uint16
+	UUId        uint32
+	Version     [3]byte
+	EncryptFlag byte
+	EncryptKey  uint32
+}
+
+func (header *Header) UnmarshalUn([]byte) error {
+	panic("implement me")
+}
+
+func (header *Header) Marshal() ([]byte, error) {
+	panic("implement me")
+}
+
 type Message struct {
-	Version  string // 软件版本
-	DeviceId string //设备id
-	Switch1  string //开端输入1
-	Switch2  string //开端输入1
-	Input1   string //模拟输入1
-	Input2   string //模拟输入2
-	Voltage  string //电压
-	Record   int    //采样频率
-	Upload   int    //上传频率
-	Ack      int    //16进制的校验码
-	rawData  []byte //原始数据
+	Header  Header
+	Body    iface.IBody
+	Crc     uint16
+	rawData []byte
 }
 
-func (msg *Message) String() string {
-	return fmt.Sprintf("配置")
+func NewMessage() iface.IMessage {
+	return &Message{
+		Header: Header{},
+		Body:   &body.ConnectReq{},
+	}
+}
+func (msg *Message) UnmarshalUn(data []byte) error {
+	buffer := bytes.NewBuffer(data)
+	if err := msg.Header.UnmarshalUn(buffer.Next(22)); err != nil {
+		return err
+	}
+	body_len := msg.Header.Len - 22 - 1
+	if err := msg.Body.UnmarshalUn(buffer.Next(int(body_len))); err != nil {
+		return err
+	}
+	if err := binary.Read(buffer, binary.BigEndian, &msg.Crc); err != nil {
+		return err
+	}
+	return nil
 }
 
-func NewMessage() *Message {
-	return &Message{}
+func (msg *Message) Marshal() ([]byte, error) {
+	buffer := bytes.NewBuffer([]byte{})
+	header_data, err := msg.Header.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	buffer.Write(header_data)
+	body_data, err := msg.Body.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	buffer.Write(body_data)
+	if err := binary.Write(buffer, binary.BigEndian, msg.Crc); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }
 
 func (msg *Message) GetData() []byte {
 	return msg.rawData
 }
-func (msg *Message) UnmarshalUn(data []byte) error {
-	splitData := strings.Split(string(data), ":")
-
-	msg.Version = splitData[0]
-
-	msg.DeviceId = splitData[1]
-
-	msg.Switch1 = splitData[2]
-
-	msg.Switch2 = splitData[3]
-
-	msg.Input1 = splitData[4]
-
-	msg.Input2 = splitData[5]
-
-	msg.Voltage = splitData[6]
-
-	if s, err := strconv.Atoi(splitData[7]); err != nil {
-		return err
-	} else {
-		msg.Record = s
-	}
-
-	if s, err := strconv.Atoi(splitData[8]); err != nil {
-		return err
-	} else {
-		msg.Upload = s
-	}
-
-	if s, err := strconv.Atoi(splitData[9]); err != nil {
-		return err
-	} else {
-		msg.Ack = s
-	}
-	msg.rawData = data
-	return nil
-}
-
-func (msg *Message) CheckAck() bool {
-	needCheck := msg.rawData[:len(msg.rawData)-1]
-	ack := 0
-	for _, ord := range needCheck {
-		ack += int(ord)
-	}
-	return ack == msg.Ack
-}
-
-func (msg *Message) Marshal() []byte {
-	buffer := bytes.NewBuffer([]byte{})
-	buffer.WriteByte('{')
-	data := []string{"A"}
-	data = append(data, msg.Switch1)
-	data = append(data, msg.Switch2)
-	data = append(data, msg.Input1)
-	data = append(data, msg.Input2)
-	data = append(data, msg.Voltage)
-	buffer.WriteString(strings.Join(data, ":"))
-	buffer.WriteByte('}')
-	return buffer.Bytes()
-}
 
 func (msg *Message) GetId() uint32 {
-	return 1
+	return uint32(msg.Header.ID)
+}
+
+func (Message) String() string {
+	return "message"
 }
