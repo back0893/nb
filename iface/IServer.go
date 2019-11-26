@@ -1,7 +1,5 @@
 package iface
 
-import "bufio"
-
 type IServer interface {
 	Run()
 	Server()
@@ -13,6 +11,6 @@ type IServer interface {
 	CallOnConnStart(connection IConnection)
 	SetOnConnStop(func(connection IConnection))
 	CallOnConnStop(connection IConnection)
-	AddSplitFunc(splitFunc bufio.SplitFunc)
-	GetSplitFunc() bufio.SplitFunc
+	SetProtocol(protocol IProtocol)
+	GetProtocol() IProtocol
 }

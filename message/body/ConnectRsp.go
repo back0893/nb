@@ -6,8 +6,9 @@ type ConnectRsp struct {
 }
 
 func (ConnectRsp) UnmarshalUn([]byte) error {
-
+	return nil
 }
 
 func (ConnectRsp) Marshal() ([]byte, error) {
+	return []byte{}, nil
 }

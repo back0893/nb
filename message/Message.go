@@ -5,6 +5,8 @@ import (
 	"Nb/message/body"
 	"bytes"
 	"encoding/binary"
+	"github.com/howeyc/crc16"
+	"log"
 )
 
 type Header struct {
@@ -12,17 +14,61 @@ type Header struct {
 	SN          uint32
 	ID          uint16
 	UUId        uint32
-	Version     [3]byte
+	Version     []byte
 	EncryptFlag byte
 	EncryptKey  uint32
 }
 
-func (header *Header) UnmarshalUn([]byte) error {
-	panic("implement me")
+func (header *Header) UnmarshalUn(data []byte) error {
+	buffer := bytes.NewBuffer(data)
+	if err := binary.Read(buffer, binary.BigEndian, &header.Len); err != nil {
+		return err
+	}
+	if err := binary.Read(buffer, binary.BigEndian, &header.SN); err != nil {
+		return err
+	}
+	if err := binary.Read(buffer, binary.BigEndian, &header.ID); err != nil {
+		return err
+	}
+	if err := binary.Read(buffer, binary.BigEndian, &header.UUId); err != nil {
+		return err
+	}
+	if err := binary.Read(buffer, binary.BigEndian, &header.Version); err != nil {
+		return err
+	}
+	if err := binary.Read(buffer, binary.BigEndian, &header.EncryptFlag); err != nil {
+		return err
+	}
+	if err := binary.Read(buffer, binary.BigEndian, &header.EncryptKey); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (header *Header) Marshal() ([]byte, error) {
-	panic("implement me")
+	buffer := bytes.NewBuffer([]byte{})
+	if err := binary.Write(buffer, binary.BigEndian, &header.Len); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(buffer, binary.BigEndian, &header.SN); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(buffer, binary.BigEndian, &header.ID); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(buffer, binary.BigEndian, &header.UUId); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(buffer, binary.BigEndian, &header.Version); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(buffer, binary.BigEndian, &header.EncryptFlag); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(buffer, binary.BigEndian, &header.EncryptKey); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }
 
 type Message struct {
@@ -34,16 +80,20 @@ type Message struct {
 
 func NewMessage() iface.IMessage {
 	return &Message{
-		Header: Header{},
-		Body:   &body.ConnectReq{},
+		Header: Header{
+			Version: make([]byte, 3),
+		},
+		Body: &body.ConnectReq{},
 	}
 }
 func (msg *Message) UnmarshalUn(data []byte) error {
 	buffer := bytes.NewBuffer(data)
+	log.Println(crc16.ChecksumCCITTFalse(data[:142]))
+
 	if err := msg.Header.UnmarshalUn(buffer.Next(22)); err != nil {
 		return err
 	}
-	body_len := msg.Header.Len - 22 - 1
+	body_len := msg.Header.Len - 22 - 2 - 2
 	if err := msg.Body.UnmarshalUn(buffer.Next(int(body_len))); err != nil {
 		return err
 	}
@@ -55,16 +105,21 @@ func (msg *Message) UnmarshalUn(data []byte) error {
 
 func (msg *Message) Marshal() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
+	body_data, err := msg.Body.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	msg.Header.Len = 22 + 2 + 2 + uint32(len(body_data))
+
 	header_data, err := msg.Header.Marshal()
 	if err != nil {
 		return nil, err
 	}
 	buffer.Write(header_data)
-	body_data, err := msg.Body.Marshal()
-	if err != nil {
-		return nil, err
-	}
 	buffer.Write(body_data)
+	//设置crc
+	msg.Crc = crc16.ChecksumCCITTFalse(buffer.Bytes())
 	if err := binary.Write(buffer, binary.BigEndian, msg.Crc); err != nil {
 		return nil, err
 	}
@@ -81,4 +136,11 @@ func (msg *Message) GetId() uint32 {
 
 func (Message) String() string {
 	return "message"
+}
+
+func (msg *Message) CheckSum() uint16 {
+	data, _ := msg.Header.Marshal()
+	b, _ := msg.Body.Marshal()
+	data = append(data, b...)
+	return crc16.ChecksumCCITTFalse(data)
 }

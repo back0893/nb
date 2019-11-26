@@ -5,9 +5,7 @@ import (
 	"Nb/message"
 	"Nb/utils"
 	"bufio"
-	"bytes"
 	"fmt"
-	"io"
 	"net"
 	"sync"
 )
@@ -61,9 +59,6 @@ func (c *Connection) GetConn() *net.TCPConn {
 	return c.conn
 }
 
-func (c *Connection) Write(data []byte) (int, error) {
-	return c.conn.Write(data)
-}
 func (c *Connection) GetConId() uint64 {
 	return c.connId
 }
@@ -86,31 +81,19 @@ func (c *Connection) StartRead() {
 
 	scan := bufio.NewScanner(c.conn)
 
-	scan.Split(c.server.GetSplitFunc())
-
-	scan.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if len(data) == 0 && atEOF == true {
-			return 0, nil, io.EOF
-		}
-		start_index := bytes.IndexByte(data, '{')
-		end_index := bytes.IndexByte(data, '}')
-		if atEOF == true && (start_index == -1 || end_index == -1) {
-			return 0, nil, io.EOF
-		}
-		if start_index == -1 || end_index == -1 {
-			return 0, nil, nil
-		}
-		if start_index > end_index {
-			//异常的流,寻找下一个争取的包
-			return end_index + 1, nil, nil
-		}
-		return end_index + 1, data[start_index+1 : end_index], nil
-	})
+	scan.Split(c.server.GetProtocol().SplitFunc)
 	for scan.Scan() {
 		data := scan.Bytes()
-		msg := message.NewMessage()
+		data = c.server.GetProtocol().Decode(data)
+		t := message.NewMessage()
+
+		msg := t.(*message.Message)
+
 		err := msg.UnmarshalUn(data)
-		fmt.Println(err)
+		if err != nil {
+			fmt.Println()
+		}
+		fmt.Println(msg.CheckSum())
 		request := NewRequest(c, msg)
 		if utils.GlobalObject.MaxWorkerSize > 0 {
 			c.server.GetMsgRouter().SendMsgToTaskQueue(request)
@@ -124,10 +107,14 @@ func (c *Connection) StartWrite() {
 	for {
 		select {
 		case data := <-c.msgChan:
+			//这里可以最终的转义处理,新增头尾标志
+			data = c.server.GetProtocol().Encode(data)
 			if _, err := c.conn.Write(data); err != nil {
 				utils.LoggerObject.Write(err.Error())
 			}
 		case data := <-c.msgBuffChan:
+			//这里可以最终的转义处理,新增头尾标志
+			data = c.server.GetProtocol().Encode(data)
 			if _, err := c.conn.Write(data); err != nil {
 				utils.LoggerObject.Write(err.Error())
 			}
@@ -138,8 +125,6 @@ func (c *Connection) StartWrite() {
 }
 
 func (c *Connection) SendMsg(data []byte) {
-	//这里可以最终的转义处理,新增头尾标志
-
 	c.msgChan <- data
 }
 func (c *Connection) SendBuffMsg(data []byte) {
