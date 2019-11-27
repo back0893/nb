@@ -93,7 +93,6 @@ func (c *Connection) StartRead() {
 		if err != nil {
 			fmt.Println()
 		}
-		fmt.Println(msg.CheckSum())
 		request := NewRequest(c, msg)
 		if utils.GlobalObject.MaxWorkerSize > 0 {
 			c.server.GetMsgRouter().SendMsgToTaskQueue(request)
