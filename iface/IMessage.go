@@ -5,5 +5,4 @@ type IMessage interface {
 	Marshal() ([]byte, error)
 	GetData() []byte
 	GetId() uint32
-	String() string
 }

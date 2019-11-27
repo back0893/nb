@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"github.com/howeyc/crc16"
-	"log"
 )
 
 type Header struct {
@@ -88,11 +87,10 @@ func NewMessage() iface.IMessage {
 }
 func (msg *Message) UnmarshalUn(data []byte) error {
 	buffer := bytes.NewBuffer(data)
-	log.Println(crc16.ChecksumCCITTFalse(data[:142]))
 
-	if err := msg.Header.UnmarshalUn(buffer.Next(22)); err != nil {
-		return err
-	}
+	//if err := msg.Header.UnmarshalUn(buffer.Next(22)); err != nil {
+	//	return err
+	//}
 	body_len := msg.Header.Len - 22 - 2 - 2
 	if err := msg.Body.UnmarshalUn(buffer.Next(int(body_len))); err != nil {
 		return err
@@ -132,10 +130,6 @@ func (msg *Message) GetData() []byte {
 
 func (msg *Message) GetId() uint32 {
 	return uint32(msg.Header.ID)
-}
-
-func (Message) String() string {
-	return "message"
 }
 
 func (msg *Message) CheckSum() uint16 {

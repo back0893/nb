@@ -1,5 +1,8 @@
 package body
 
+/**
+连接请求
+*/
 import (
 	"bytes"
 	"encoding/binary"

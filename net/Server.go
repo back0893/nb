@@ -57,7 +57,7 @@ func (s *Server) Run() {
 	//初始化db
 	db, err := utils.NewDb()
 	if err != nil {
-		panic("!连接数据库失败!")
+		panic(err)
 	}
 
 	utils.GlobalObject.Db = db
@@ -94,7 +94,9 @@ func (s *Server) Server() {
 }
 
 func (s *Server) Stop() {
-	utils.GlobalObject.Db.Close()
+	for _, db := range utils.GlobalObject.Db {
+		_ = db.Close()
+	}
 	s.manager.ClearConn()
 	utils.LoggerObject.Write("服务器停止")
 }

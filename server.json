@@ -2,15 +2,29 @@
   "host": "0.0.0.0",
   "port": 10034,
   "database": {
-    "username": "epuser",
-    "password": "epuser@123-New",
-    "params": {
-      "charset": "utf8",
-      "parseTime": "true",
-      "loc": "Local"
-    },
-    "net": "tcp",
-    "addr": "106.75.138.97:3306",
-    "dbName": "repair"
+      "ep": {
+        "username": "epuser",
+        "password": "epuser@123-New",
+        "params": {
+          "charset": "utf8",
+          "parseTime": "true",
+          "loc": "Local"
+        },
+        "net": "tcp",
+        "addr": "106.75.138.97:3306",
+        "dbName": "ep"
+      },
+    "gps": {
+      "username": "epuser",
+      "password": "epuser@123-New",
+      "params": {
+        "charset": "utf8",
+        "parseTime": "true",
+        "loc": "Local"
+      },
+      "net": "tcp",
+      "addr": "106.75.138.97:3306",
+      "dbName": "newgps"
+    }
   }
 }

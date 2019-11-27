@@ -29,11 +29,11 @@ type DB struct {
 	Params map[string]string `json:"params"`
 }
 type Global struct {
-	Host               string `json:"host"`
-	Port               int    `json:"port"`
-	Database           *DB    `json:"database"`
+	Host               string         `json:"host"`
+	Port               int            `json:"port"`
+	Database           map[string]*DB `json:"database"`
 	Server             iface.IServer
-	Db                 *gorm.DB
+	Db                 map[string]*gorm.DB
 	MaxWorkerSize      int `json:"worker_size"`
 	MaxWorkerQueueTask int `json:"queue_task"`
 }

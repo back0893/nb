@@ -2,7 +2,6 @@ package net
 
 import (
 	"Nb/iface"
-	"Nb/message"
 	"Nb/utils"
 	"bufio"
 	"fmt"
@@ -16,8 +15,8 @@ type Connection struct {
 	ExitChan    chan bool
 	IsStop      bool
 	server      iface.IServer
-	msgChan     chan []byte
-	msgBuffChan chan []byte
+	msgChan     chan iface.IMessage
+	msgBuffChan chan iface.IMessage
 	lock        sync.RWMutex
 	property    map[string]interface{}
 }
@@ -49,8 +48,8 @@ func NewConnection(connId uint64, conn *net.TCPConn, server iface.IServer) iface
 		ExitChan:    make(chan bool),
 		IsStop:      false,
 		server:      server,
-		msgChan:     make(chan []byte),
-		msgBuffChan: make(chan []byte, 1024),
+		msgChan:     make(chan iface.IMessage),
+		msgBuffChan: make(chan iface.IMessage, 1024),
 		property:    make(map[string]interface{}),
 	}
 }
@@ -84,14 +83,10 @@ func (c *Connection) StartRead() {
 	scan.Split(c.server.GetProtocol().SplitFunc)
 	for scan.Scan() {
 		data := scan.Bytes()
-		data = c.server.GetProtocol().Decode(data)
-		t := message.NewMessage()
-
-		msg := t.(*message.Message)
-
-		err := msg.UnmarshalUn(data)
+		msg, err := c.server.GetProtocol().Decode(data)
 		if err != nil {
-			fmt.Println()
+			utils.LoggerObject.Write(err.Error())
+			continue
 		}
 		request := NewRequest(c, msg)
 		if utils.GlobalObject.MaxWorkerSize > 0 {
@@ -107,14 +102,22 @@ func (c *Connection) StartWrite() {
 		select {
 		case data := <-c.msgChan:
 			//这里可以最终的转义处理,新增头尾标志
-			data = c.server.GetProtocol().Encode(data)
-			if _, err := c.conn.Write(data); err != nil {
+			raw, err := c.server.GetProtocol().Encode(data)
+			if err != nil {
+				utils.LoggerObject.Write(err.Error())
+				return
+			}
+			if _, err := c.conn.Write(raw); err != nil {
 				utils.LoggerObject.Write(err.Error())
 			}
 		case data := <-c.msgBuffChan:
 			//这里可以最终的转义处理,新增头尾标志
-			data = c.server.GetProtocol().Encode(data)
-			if _, err := c.conn.Write(data); err != nil {
+			raw, err := c.server.GetProtocol().Encode(data)
+			if err != nil {
+				utils.LoggerObject.Write(err.Error())
+				return
+			}
+			if _, err := c.conn.Write(raw); err != nil {
 				utils.LoggerObject.Write(err.Error())
 			}
 		case <-c.ExitChan:
@@ -123,11 +126,11 @@ func (c *Connection) StartWrite() {
 	}
 }
 
-func (c *Connection) SendMsg(data []byte) {
-	c.msgChan <- data
+func (c *Connection) SendMsg(msg iface.IMessage) {
+	c.msgChan <- msg
 }
-func (c *Connection) SendBuffMsg(data []byte) {
-	c.msgBuffChan <- data
+func (c *Connection) SendBuffMsg(msg iface.IMessage) {
+	c.msgBuffChan <- msg
 }
 func (c *Connection) Stop() {
 	if c.IsStop {
