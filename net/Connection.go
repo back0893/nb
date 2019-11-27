@@ -113,7 +113,6 @@ func (c *Connection) StartRead() {
 			utils.LoggerObject.Write(err.Error())
 			continue
 		}
-
 		request := NewRequest(c, msg)
 		if utils.GlobalObject.MaxWorkerSize > 0 {
 			c.server.GetMsgRouter().SendMsgToTaskQueue(request)
@@ -121,7 +120,7 @@ func (c *Connection) StartRead() {
 			go c.server.GetMsgRouter().DoMsgHandler(request)
 		}
 	}
-	<-c.ExitChan
+	c.ExitChan <- true
 }
 func (c *Connection) StartWrite() {
 	for {

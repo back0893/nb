@@ -18,11 +18,14 @@ func NewHandler() iface.IRouter {
 	return &Handler{}
 }
 func (hand *Handler) Handle(request iface.IRequest) {
-	hand.doMsg(request.GetMsg())
+	iMessage := request.GetMsg()
+	msg := iMessage.(*message.Message)
+	//设置连接的属性
+	request.GetConnection().SetProperty("deviceId", msg.DeviceId)
+	hand.doMsg(msg)
 	request.GetConnection().SendBuffMsg(request.GetMsg().Marshal())
 }
-func (hand *Handler) doMsg(iMessage iface.IMessage) {
-	msg := iMessage.(*message.Message)
+func (hand *Handler) doMsg(msg *message.Message) {
 	db := utils.GlobalObject.Db
 	//获取node_id
 	node := model.AutoNode{}
@@ -32,11 +35,16 @@ func (hand *Handler) doMsg(iMessage iface.IMessage) {
 		utils.LoggerObject.Write(fmt.Sprintf("%s设备没有配置", msg.DeviceId))
 		return
 	}
+	//更新设备在线
+	node.IsOnline = "Y"
+	//更新
+	db.Model(&node).Where("duid=?", msg.DeviceId).Update("is_online", "Y")
 	//有node_id 更新pin表中的实时数据
 	pins := make([]model.AutoNodePing, 0)
 	db.Unscoped().Where("node_id=?", node.ID).Find(&pins)
 	if len(pins) == 0 {
 		//没有就不做更新操作
+		utils.LoggerObject.Write(fmt.Sprintf("%s设备没有配置pin表", msg.DeviceId))
 		return
 	}
 	for _, pin := range pins {
