@@ -109,8 +109,11 @@ func (c *Connection) StartRead() {
 			utils.LoggerObject.Write("无法处理")
 			continue
 		}
-		err := msg.UnmarshalUn(data)
-		fmt.Println(err)
+		if err := msg.UnmarshalUn(data); err != nil {
+			utils.LoggerObject.Write(err.Error())
+			continue
+		}
+
 		request := NewRequest(c, msg)
 		if utils.GlobalObject.MaxWorkerSize > 0 {
 			c.server.GetMsgRouter().SendMsgToTaskQueue(request)

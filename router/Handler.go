@@ -5,6 +5,7 @@ import (
 	"Nb/message"
 	"Nb/model"
 	"Nb/utils"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -28,6 +29,7 @@ func (hand *Handler) doMsg(iMessage iface.IMessage) {
 	db.Unscoped().Where("duid=?", msg.DeviceId).First(&node)
 	if node.ID == 0 {
 		//没有对应的id不做任何操作
+		utils.LoggerObject.Write(fmt.Sprintf("%s设备没有配置", msg.DeviceId))
 		return
 	}
 	//有node_id 更新pin表中的实时数据
