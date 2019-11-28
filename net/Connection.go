@@ -95,7 +95,7 @@ func (c *Connection) StartRead() {
 			go c.server.GetMsgRouter().DoMsgHandler(request)
 		}
 	}
-	<-c.ExitChan
+	c.ExitChan <- true
 }
 func (c *Connection) StartWrite() {
 	for {

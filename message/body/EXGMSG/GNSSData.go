@@ -1,4 +1,4 @@
-package body
+package EXGMSG
 
 type GNSSData struct {
 	Encrypt   byte   //是否加密
@@ -13,4 +13,11 @@ type GNSSData struct {
 	Altitude  uint16 //海拔
 	State     uint32 //车辆状态 忽略
 	Alarm     uint32 //车辆告警 忽略
+}
+
+func NewGNSSData() GNSSData {
+	return GNSSData{
+		Date: make([]byte, 4, 4),
+		Time: make([]byte, 3, 3),
+	}
 }

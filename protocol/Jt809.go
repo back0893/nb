@@ -3,8 +3,9 @@ package protocol
 import (
 	"Nb/iface"
 	"Nb/message"
-	"Nb/message/body"
+	"Nb/message/body/EXGMSG"
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"io"
 )
@@ -32,8 +33,26 @@ func (Jt809) SplitFunc(data []byte, atEOF bool) (advance int, token []byte, err 
 	message := data[start_index+1 : end_index]
 	return end_index + 1, message, nil
 }
+func (protocol *Jt809) getDataType(data *[]byte) (uint16, error) {
+	buffer := bytes.NewBuffer(*data)
+	buffer.Next(22 + 22)
+	var data_type uint16
+	if err := binary.Read(buffer, binary.BigEndian, &data_type); err != nil {
+		return 0, err
+	}
+	return data_type, nil
+}
+func (protocol *Jt809) getID(data *[]byte) (uint16, error) {
+	buffer := bytes.NewBuffer(*data)
+	buffer.Next(8)
+	var id uint16
+	if err := binary.Read(buffer, binary.BigEndian, &id); err != nil {
+		return 0, err
+	}
+	return id, nil
+}
 
-func (Jt809) Decode(data []byte) (iface.IMessage, error) {
+func (protocol *Jt809) Decode(data []byte) (iface.IMessage, error) {
 	//转义
 	/**
 	在数据发送时进行了如下的转义
@@ -46,22 +65,39 @@ func (Jt809) Decode(data []byte) (iface.IMessage, error) {
 	data = bytes.ReplaceAll(data, []byte{0x5a, 0x02}, []byte{0x5a})
 	data = bytes.ReplaceAll(data, []byte{0x5e, 0x01}, []byte{0x5d})
 	data = bytes.ReplaceAll(data, []byte{0x5e, 0x02}, []byte{0x5e})
-	header := message.Header{}
-	if err := header.UnmarshalUn(data[:22]); err != nil {
+	id, err := protocol.getID(&data)
+	if err != nil {
 		return nil, err
 	}
-	switch header.ID {
+	switch id {
 	case 0x1001:
 		//使用messgae
-		msg := &message.Message{
-			Header: header,
-			Body:   &body.ConnectReq{},
-		}
-		if err := msg.UnmarshalUn(data[22:]); err != nil {
+		msg := message.NewMessage()
+		if err := msg.UnmarshalUn(data); err != nil {
 			return nil, err
 		}
 		return msg, nil
 	case 0x1200:
+		//这里需要进一步判断data_type
+		data_type, err := protocol.getDataType(&data)
+		if err != nil {
+			return nil, err
+		}
+		switch data_type {
+		case 0x1201:
+		case 0x1202:
+			msg := message.Message{
+				Header: message.NewHeader(),
+				Body:   EXGMSG.NewMsgLocation(),
+			}
+			if err := msg.UnmarshalUn(data); err != nil {
+				return nil, err
+			}
+			//重新设置消息id
+			return &msg, err
+		case 0x1203:
+
+		}
 	}
 	return nil, errors.New("灭有寻找到")
 }

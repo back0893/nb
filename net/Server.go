@@ -65,6 +65,7 @@ func (s *Server) Run() {
 
 	//启动worker处理池
 	s.msgHandler.StartWorkerPool()
+	//查询连接数量
 	s.Server()
 }
 

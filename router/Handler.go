@@ -32,7 +32,7 @@ func (hand *Handler) Handle(request iface.IRequest) {
 		VerifyCode: 1,
 	}
 	response := &message.Message{
-		Header: header_msg,
+		Header: &header_msg,
 		Body:   body_msg,
 	}
 	request.GetConnection().SendBuffMsg(response)

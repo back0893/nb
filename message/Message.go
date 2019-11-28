@@ -18,6 +18,11 @@ type Header struct {
 	EncryptKey  uint32
 }
 
+func NewHeader() *Header {
+	return &Header{
+		Version: make([]byte, 3, 3),
+	}
+}
 func (header *Header) UnmarshalUn(data []byte) error {
 	buffer := bytes.NewBuffer(data)
 	if err := binary.Read(buffer, binary.BigEndian, &header.Len); err != nil {
@@ -71,7 +76,7 @@ func (header *Header) Marshal() ([]byte, error) {
 }
 
 type Message struct {
-	Header  Header
+	Header  *Header
 	Body    iface.IBody
 	Crc     uint16
 	rawData []byte
@@ -79,7 +84,7 @@ type Message struct {
 
 func NewMessage() iface.IMessage {
 	return &Message{
-		Header: Header{
+		Header: &Header{
 			Version: make([]byte, 3),
 		},
 		Body: &body.ConnectReq{},
@@ -88,9 +93,9 @@ func NewMessage() iface.IMessage {
 func (msg *Message) UnmarshalUn(data []byte) error {
 	buffer := bytes.NewBuffer(data)
 
-	//if err := msg.Header.UnmarshalUn(buffer.Next(22)); err != nil {
-	//	return err
-	//}
+	if err := msg.Header.UnmarshalUn(buffer.Next(22)); err != nil {
+		return err
+	}
 	body_len := msg.Header.Len - 22 - 2 - 2
 	if err := msg.Body.UnmarshalUn(buffer.Next(int(body_len))); err != nil {
 		return err

@@ -1,4 +1,4 @@
-package body
+package EXGMSG
 
 import (
 	"bytes"
@@ -10,10 +10,7 @@ import (
 */
 
 type MsgRegister struct {
-	CarNum     []byte //长21位的车牌 gbk
-	Color      byte
-	DataType   uint16 //子业务标识
-	Length     uint32
+	EXGMSG
 	PlatformId []byte //长11位的平台编号
 	ProducerId []byte //长11位的终端厂商编号
 	ModelType  []byte //长8位的终端型号

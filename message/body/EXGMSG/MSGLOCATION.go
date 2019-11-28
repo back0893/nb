@@ -1,6 +1,7 @@
-package body
+package EXGMSG
 
 import (
+	"Nb/iface"
 	"bytes"
 	"encoding/binary"
 )
@@ -10,11 +11,15 @@ import (
 */
 
 type MsgLocation struct {
-	CarNum   []byte //长21位的车牌 gbk
-	Color    byte
-	DataType uint16 //子业务标识
-	Length   uint32
+	EXGMSG
 	GNSSData
+}
+
+func NewMsgLocation() iface.IBody {
+	return &MsgLocation{
+		EXGMSG:   NewEXGMSG(),
+		GNSSData: NewGNSSData(),
+	}
 }
 
 func (msg *MsgLocation) UnmarshalUn(data []byte) error {

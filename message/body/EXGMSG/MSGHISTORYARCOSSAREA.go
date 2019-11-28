@@ -1,4 +1,4 @@
-package body
+package EXGMSG
 
 import (
 	"bytes"
@@ -6,10 +6,7 @@ import (
 )
 
 type HISTORYARCOSSAREA struct {
-	CarNum    []byte //长21位的车牌 gbk
-	Color     byte
-	DataType  uint16 //子业务标识
-	Length    uint32
+	EXGMSG
 	GNSSCnt   byte //后续包含的gnss_data的个数
 	GNSSDatas []GNSSData
 }
