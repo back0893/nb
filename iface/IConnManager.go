@@ -6,4 +6,5 @@ type IConnManager interface {
 	Remove(uint64)
 	Len() int
 	ClearConn()
+	GetConnections() map[uint64]IConnection
 }

@@ -3,6 +3,7 @@ package protocol
 import (
 	"Nb/iface"
 	"Nb/message"
+	"Nb/message/body"
 	"Nb/message/body/EXGMSG"
 	"bytes"
 	"encoding/binary"
@@ -72,7 +73,10 @@ func (protocol *Jt809) Decode(data []byte) (iface.IMessage, error) {
 	switch id {
 	case 0x1001:
 		//使用messgae
-		msg := message.NewMessage()
+		msg := &message.Message{
+			Header: message.NewHeader(),
+			Body:   body.NewConnectReq(),
+		}
 		if err := msg.UnmarshalUn(data); err != nil {
 			return nil, err
 		}
@@ -88,15 +92,30 @@ func (protocol *Jt809) Decode(data []byte) (iface.IMessage, error) {
 		case 0x1202:
 			msg := message.Message{
 				Header: message.NewHeader(),
-				Body:   EXGMSG.NewMsgLocation(),
+				Body:   message.NewBody(EXGMSG.NewMsgLocation()),
 			}
 			if err := msg.UnmarshalUn(data); err != nil {
 				return nil, err
 			}
-			//重新设置消息id
 			return &msg, err
 		case 0x1203:
-
+		}
+	case 0x1005:
+		msg := &message.Message{
+			Header: message.NewHeader(),
+			Body:   message.EmptyBody{},
+		}
+		if err := msg.UnmarshalUn(data); err != nil {
+			return nil, err
+		}
+		return msg, nil
+	case 0x1006:
+		msg := &message.Message{
+			Header: message.NewHeader(),
+			Body:   message.EmptyBody{},
+		}
+		if err := msg.UnmarshalUn(data); err != nil {
+			return nil, err
 		}
 	}
 	return nil, errors.New("灭有寻找到")

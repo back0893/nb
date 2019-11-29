@@ -6,28 +6,20 @@ import (
 )
 
 type HISTORYARCOSSAREA struct {
-	EXGMSG
 	GNSSCnt   byte //后续包含的gnss_data的个数
 	GNSSDatas []GNSSData
 }
 
+func (msg *HISTORYARCOSSAREA) Len() int {
+	length := 1
+	for _, gnss := range msg.GNSSDatas {
+		length += gnss.Len()
+	}
+	return length
+}
+
 func (msg *HISTORYARCOSSAREA) UnmarshalUn(data []byte) error {
 	buffer := bytes.NewBuffer(data)
-	if err := binary.Read(buffer, binary.BigEndian, &msg.CarNum); err != nil {
-		return err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.Color); err != nil {
-		return err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.DataType); err != nil {
-		return err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.Length); err != nil {
-		return err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.Length); err != nil {
-		return err
-	}
 	if err := binary.Read(buffer, binary.BigEndian, &msg.GNSSCnt); err != nil {
 		return err
 	}
@@ -74,21 +66,6 @@ func (msg *HISTORYARCOSSAREA) UnmarshalUn(data []byte) error {
 
 func (msg *HISTORYARCOSSAREA) Marshal() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
-	if err := binary.Write(buffer, binary.BigEndian, &msg.CarNum); err != nil {
-		return nil, err
-	}
-	if err := binary.Write(buffer, binary.BigEndian, &msg.Color); err != nil {
-		return nil, err
-	}
-	if err := binary.Write(buffer, binary.BigEndian, &msg.DataType); err != nil {
-		return nil, err
-	}
-	if err := binary.Write(buffer, binary.BigEndian, &msg.Length); err != nil {
-		return nil, err
-	}
-	if err := binary.Write(buffer, binary.BigEndian, &msg.Length); err != nil {
-		return nil, err
-	}
 	if err := binary.Write(buffer, binary.BigEndian, &msg.GNSSCnt); err != nil {
 		return nil, err
 	}

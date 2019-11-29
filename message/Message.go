@@ -2,12 +2,14 @@ package message
 
 import (
 	"Nb/iface"
-	"Nb/message/body"
 	"bytes"
 	"encoding/binary"
 	"github.com/howeyc/crc16"
 )
 
+/**
+header 开始
+*/
 type Header struct {
 	Len         uint32
 	SN          uint32
@@ -75,6 +77,10 @@ func (header *Header) Marshal() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
+/**
+header 结束
+*/
+
 type Message struct {
 	Header  *Header
 	Body    iface.IBody
@@ -82,14 +88,6 @@ type Message struct {
 	rawData []byte
 }
 
-func NewMessage() iface.IMessage {
-	return &Message{
-		Header: &Header{
-			Version: make([]byte, 3),
-		},
-		Body: &body.ConnectReq{},
-	}
-}
 func (msg *Message) UnmarshalUn(data []byte) error {
 	buffer := bytes.NewBuffer(data)
 
@@ -113,7 +111,7 @@ func (msg *Message) Marshal() ([]byte, error) {
 		return nil, err
 	}
 
-	msg.Header.Len = 22 + 2 + 2 + uint32(len(body_data))
+	msg.Header.Len = 22 + 2 + 2 + uint32(msg.Body.Len())
 
 	header_data, err := msg.Header.Marshal()
 	if err != nil {

@@ -18,8 +18,7 @@ func NewHandler() iface.IRouter {
 func (hand *Handler) Handle(request iface.IRequest) {
 	msg := request.GetMsg()
 	utils.LoggerObject.Write(fmt.Sprintf("%d", msg.GetId()))
-	header_msg := message.Header{
-		Len:         0,
+	header := message.Header{
 		SN:          1,
 		ID:          0x1002,
 		UUId:        1,
@@ -27,12 +26,18 @@ func (hand *Handler) Handle(request iface.IRequest) {
 		EncryptFlag: 0,
 		EncryptKey:  0,
 	}
+	if value, ok := request.GetProperty("sn"); ok {
+		header.SN = value.(uint32)
+	} else {
+		header.SN = 1
+	}
+
 	body_msg := &body.ConnectRsp{
 		Result:     0x00,
 		VerifyCode: 1,
 	}
 	response := &message.Message{
-		Header: &header_msg,
+		Header: &header,
 		Body:   body_msg,
 	}
 	request.GetConnection().SendBuffMsg(response)

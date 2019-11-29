@@ -10,7 +10,6 @@ import (
 */
 
 type MsgRegister struct {
-	EXGMSG
 	PlatformId []byte //长11位的平台编号
 	ProducerId []byte //长11位的终端厂商编号
 	ModelType  []byte //长8位的终端型号
@@ -18,20 +17,12 @@ type MsgRegister struct {
 	Sim        []byte //长12位的sim卡号 gbk
 }
 
+func (msg *MsgRegister) Len() int {
+	return 11 + 11 + 8 + 7 + 12
+}
+
 func (msg *MsgRegister) UnmarshalUn(data []byte) error {
 	buffer := bytes.NewBuffer(data)
-	if err := binary.Read(buffer, binary.BigEndian, &msg.CarNum); err != nil {
-		return err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.Color); err != nil {
-		return err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.DataType); err != nil {
-		return err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.Length); err != nil {
-		return err
-	}
 	if err := binary.Read(buffer, binary.BigEndian, &msg.PlatformId); err != nil {
 		return err
 	}
@@ -49,18 +40,6 @@ func (msg *MsgRegister) UnmarshalUn(data []byte) error {
 
 func (msg MsgRegister) Marshal() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
-	if err := binary.Write(buffer, binary.BigEndian, &msg.CarNum); err != nil {
-		return nil, err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.Color); err != nil {
-		return nil, err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.DataType); err != nil {
-		return nil, err
-	}
-	if err := binary.Read(buffer, binary.BigEndian, &msg.Length); err != nil {
-		return nil, err
-	}
 	if err := binary.Read(buffer, binary.BigEndian, &msg.PlatformId); err != nil {
 		return nil, err
 	}

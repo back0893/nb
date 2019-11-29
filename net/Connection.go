@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 )
 
 type Connection struct {
@@ -74,6 +75,24 @@ func (c *Connection) Start() {
 		}
 	}
 }
+func (c *Connection) getSn() uint32 {
+
+	value, ok := c.GetProperty("sn")
+	var sn uint32
+	defer c.SetProperty("sn", sn)
+
+	if ok == true {
+		sn := value.(uint32)
+		sn++
+	} else {
+		sn = 1
+	}
+	return sn
+}
+func (c *Connection) recordTime() {
+	timestamp := time.Now().Unix()
+	c.SetProperty("timestamp", timestamp)
+}
 func (c *Connection) StartRead() {
 	defer c.Stop()
 	defer utils.LoggerObject.Write(fmt.Sprintf("%d连接退出", c.connId))
@@ -82,6 +101,15 @@ func (c *Connection) StartRead() {
 
 	scan.Split(c.server.GetProtocol().SplitFunc)
 	for scan.Scan() {
+		//停止就退出
+		if c.IsStop {
+			break
+		}
+		c.recordTime()
+		//记录sn
+		sn := c.getSn()
+		//记录通信的时间,定时器检查
+
 		data := scan.Bytes()
 		msg, err := c.server.GetProtocol().Decode(data)
 		if err != nil {
@@ -89,13 +117,16 @@ func (c *Connection) StartRead() {
 			continue
 		}
 		request := NewRequest(c, msg)
+		request.SetProperty("sn", sn)
 		if utils.GlobalObject.MaxWorkerSize > 0 {
 			c.server.GetMsgRouter().SendMsgToTaskQueue(request)
 		} else {
 			go c.server.GetMsgRouter().DoMsgHandler(request)
 		}
 	}
-	c.ExitChan <- true
+	if !c.IsStop {
+		c.ExitChan <- true
+	}
 }
 func (c *Connection) StartWrite() {
 	for {

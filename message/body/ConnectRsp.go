@@ -13,6 +13,14 @@ type ConnectRsp struct {
 	VerifyCode uint32
 }
 
+func (msg *ConnectRsp) Len() int {
+	return 5
+}
+
+func NewConnectRsp() *ConnectRsp {
+	return &ConnectRsp{}
+}
+
 func (msg *ConnectRsp) UnmarshalUn(data []byte) error {
 	buffer := bytes.NewBuffer(data)
 	if err := binary.Read(buffer, binary.BigEndian, &msg.Result); err != nil {

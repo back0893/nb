@@ -7,7 +7,6 @@ import (
 	"Nb/model"
 	"Nb/utils"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -21,13 +20,12 @@ func NewEXGMSGRouter() iface.IRouter {
 
 func (router *EXGMSGRouter) Handle(request iface.IRequest) {
 	date := time.Now()
-	exg_body := request.GetMsg().(*message.Message).Body
-	switch exg_body.(type) {
-	case *EXGMSG.MsgLocation:
-		location := request.GetMsg().(*message.Message).Body.(*EXGMSG.MsgLocation)
-		log.Println(location)
+	exg_body := request.GetMsg().(*message.Message).Body.(*message.Body)
+	switch exg_body.DataType {
+	case 0x1202:
+		location := exg_body.SubBody.(*EXGMSG.MsgLocation)
 		point := model.GpsPoint{
-			PlateNum:  string(location.CarNum),
+			PlateNum:  string(exg_body.CarNum),
 			PointX:    float32(location.Lat) / 10e6,
 			PointY:    float32(location.Lng) / 10e6,
 			VehicleId: 0,
@@ -45,8 +43,7 @@ func (router *EXGMSGRouter) Handle(request iface.IRequest) {
 		}
 		table_name := fmt.Sprintf("vehicle_point_%s", date.Format("2006-01-02"))
 		db.Table(table_name).Create(&point)
-	case *EXGMSG.MsgRegister:
-	case *EXGMSG.HISTORYARCOSSAREA:
+	case 0x1201:
+	case 0x1203:
 	}
-	utils.LoggerObject.Write("!location!")
 }

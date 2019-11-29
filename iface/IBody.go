@@ -6,4 +6,5 @@ package iface
 type IBody interface {
 	UnmarshalUn([]byte) error
 	Marshal() ([]byte, error)
+	Len() int
 }

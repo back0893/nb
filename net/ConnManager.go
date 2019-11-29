@@ -1,9 +1,15 @@
 package net
 
-import "Nb/iface"
+import (
+	"Nb/iface"
+)
 
 type ConnManager struct {
 	connections map[uint64]iface.IConnection
+}
+
+func (manager *ConnManager) GetConnections() map[uint64]iface.IConnection {
+	return manager.connections
 }
 
 func NewConnManager() iface.IConnManager {
@@ -29,7 +35,8 @@ func (manager *ConnManager) Len() int {
 }
 
 func (manager *ConnManager) ClearConn() {
-	for _, conn := range manager.connections {
+	for id, conn := range manager.connections {
 		conn.Stop()
+		delete(manager.connections, id)
 	}
 }

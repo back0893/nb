@@ -5,6 +5,7 @@ import (
 	"Nb/utils"
 	"fmt"
 	"net"
+	"time"
 )
 
 type Server struct {
@@ -53,12 +54,36 @@ func NewServer() iface.IServer {
 		manager:    NewConnManager(),
 	}
 }
+func (s *Server) checkPing() {
+	ticker := time.NewTicker(time.Second * 10)
+	fmt.Println("123")
+	for now := range ticker.C {
+		fmt.Println("当前连接数量%d", s.manager.Len())
+		for id, con := range s.manager.GetConnections() {
+			value, ok := con.GetProperty("timestamp")
+			if !ok {
+				con.SetProperty("timestamp", now.Unix())
+				continue
+			}
+			timestamp := value.(int64)
+			if now.Unix()-timestamp >= 60 {
+				//当前连接已经3min么有数据包了
+				//手动关闭
+				fmt.Println("stop")
+				s.manager.Remove(id)
+				con.Stop()
+			}
+		}
+	}
+}
 func (s *Server) Run() {
 	//初始化db
 	db, err := utils.NewDb()
 	if err != nil {
 		panic(err)
 	}
+	//定时器检查所有连接的上次发包时间.
+	go s.checkPing()
 
 	utils.GlobalObject.Db = db
 	utils.GlobalObject.Server = s

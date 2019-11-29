@@ -16,7 +16,7 @@ func main() {
 		UUId:        1,
 		Version:     []byte{1, 2, 3},
 		EncryptFlag: 0,
-		EncryptKey:  0,
+		EncryptKey:  1,
 	}
 	//1001
 	//password := make([]byte, 8, 8)
@@ -30,7 +30,7 @@ func main() {
 	//	DownLinkPort: 3005,
 	//}
 
-	//10002
+	//1002
 	//body_msg := &body.ConnectRsp{
 	//	Result:     0x00,
 	//	VerifyCode: 1,
@@ -39,26 +39,27 @@ func main() {
 	//1202
 	car_num := make([]byte, 21)
 	copy(car_num, []byte("test1"))
-	body_msg := &EXGMSG.MsgLocation{
-		EXGMSG: EXGMSG.EXGMSG{
-			CarNum:   car_num,
-			Color:    1,
-			DataType: 0x1202,
-			Length:   64,
-		},
-		GNSSData: EXGMSG.GNSSData{
-			Encrypt:   0,
-			Date:      []byte{21, 11, 0x07, 0xe3},
-			Time:      []byte{19, 06, 02},
-			Lng:       103000000,
-			Lat:       301111111,
-			Vec1:      1,
-			Vec2:      2,
-			Vec3:      100,
-			Direction: 150,
-			Altitude:  120,
-			State:     0,
-			Alarm:     0,
+	gnss := EXGMSG.GNSSData{
+		Encrypt:   0,
+		Date:      []byte{21, 11, 0x07, 0xe3},
+		Time:      []byte{19, 06, 02},
+		Lng:       103000000,
+		Lat:       301111111,
+		Vec1:      1,
+		Vec2:      2,
+		Vec3:      100,
+		Direction: 150,
+		Altitude:  120,
+		State:     0,
+		Alarm:     0,
+	}
+	body_msg := &message.Body{
+		CarNum:   car_num,
+		Color:    1,
+		DataType: 0x1202,
+		Length:   0,
+		SubBody: &EXGMSG.MsgLocation{
+			GNSSData: gnss,
 		},
 	}
 
