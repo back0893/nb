@@ -36,9 +36,9 @@ func (hand *Handler) doMsg(msg *message.Message) {
 		return
 	}
 	//更新设备在线
-	node.IsOnline = "Y"
+	//node.IsOnline = "Y"
 	//更新
-	db.Model(&node).Where("duid=?", msg.DeviceId).Update("is_online", "Y")
+	//db.Model(&node).Where("duid=?", msg.DeviceId).Update("is_online", "Y")
 	//有node_id 更新pin表中的实时数据
 	pins := make([]model.AutoNodePing, 0)
 	db.Unscoped().Where("node_id=?", node.ID).Find(&pins)
