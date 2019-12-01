@@ -16,6 +16,7 @@ func init() {
 		Port:               8001,
 		MaxWorkerSize:      4,
 		MaxWorkerQueueTask: 1024,
+		CheckOnline:        NewDeviceUpload(),
 	}
 	GlobalObject.Reload()
 }
@@ -36,6 +37,7 @@ type Global struct {
 	Db                 *gorm.DB
 	MaxWorkerSize      int `json:"worker_size"`
 	MaxWorkerQueueTask int `json:"queue_task"`
+	CheckOnline        *DeviceUpload
 }
 
 func (global *Global) Reload() {

@@ -47,6 +47,8 @@ func (hand *Handler) doMsg(msg *message.Message) {
 		utils.LoggerObject.Write(fmt.Sprintf("%s设备没有配置pin表", msg.DeviceId))
 		return
 	}
+	datetime := time.Now()
+	utils.GlobalObject.CheckOnline.Store(msg.DeviceId, utils.NewConCheck(msg.Upload, datetime.Unix()))
 	for _, pin := range pins {
 		utils.LoggerObject.Write(pin.Time.Format("2006-01-02T15:04:05"))
 		if pin.PinId == 1 {
@@ -80,7 +82,8 @@ func (hand *Handler) doMsg(msg *message.Message) {
 			pin.PinValue = val
 			pin.Unit = "mV"
 		}
-		pin.Time = time.Now()
+		pin.Time = datetime
+		//保存至全局变量中
 		db.Save(&pin)
 		//再去插入value中的历史数据
 		node_value := model.AutoNodeValue{}

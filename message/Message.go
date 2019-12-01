@@ -15,6 +15,7 @@ type Message struct {
 	Input1   string //模拟输入1
 	Input2   string //模拟输入2
 	Voltage  string //电压
+	Rssi     int    //信号强度
 	Record   int    //采样频率
 	Upload   int    //上传频率
 	Ack      int    //16进制的校验码
@@ -52,16 +53,21 @@ func (msg *Message) UnmarshalUn(data []byte) error {
 	if s, err := strconv.Atoi(splitData[7]); err != nil {
 		return err
 	} else {
+		msg.Rssi = s
+	}
+	if s, err := strconv.Atoi(splitData[8]); err != nil {
+		return err
+	} else {
 		msg.Record = s
 	}
 
-	if s, err := strconv.Atoi(splitData[8]); err != nil {
+	if s, err := strconv.Atoi(splitData[9]); err != nil {
 		return err
 	} else {
 		msg.Upload = s
 	}
 
-	if s, err := strconv.Atoi(splitData[9]); err != nil {
+	if s, err := strconv.Atoi(splitData[10]); err != nil {
 		return err
 	} else {
 		msg.Ack = s

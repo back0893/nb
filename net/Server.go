@@ -53,7 +53,8 @@ func (s *Server) Run() {
 
 	utils.GlobalObject.Db = db
 	utils.GlobalObject.Server = s
-
+	//启动一个定时器检测
+	go utils.GlobalObject.CheckOnline.Check()
 	//启动worker处理池
 	s.msgHandler.StartWorkerPool()
 	s.Server()
