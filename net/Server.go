@@ -56,9 +56,8 @@ func NewServer() iface.IServer {
 }
 func (s *Server) checkPing() {
 	ticker := time.NewTicker(time.Second * 10)
-	fmt.Println("123")
 	for now := range ticker.C {
-		fmt.Println("当前连接数量%d", s.manager.Len())
+		fmt.Printf("当前连接数量%d\n", s.manager.Len())
 		for id, con := range s.manager.GetConnections() {
 			value, ok := con.GetProperty("timestamp")
 			if !ok {
@@ -83,7 +82,7 @@ func (s *Server) Run() {
 		panic(err)
 	}
 	//定时器检查所有连接的上次发包时间.
-	go s.checkPing()
+	//go s.checkPing()
 
 	utils.GlobalObject.Db = db
 	utils.GlobalObject.Server = s

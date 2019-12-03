@@ -9,14 +9,14 @@ import (
 主链路的连接保存请求
 */
 
-type UpLinkREQ struct {
+type Jt1005 struct {
 	Base
 }
 
-func NewUpLinkREQ() iface.IRouter {
-	return &UpLinkREQ{}
+func NewJt1005() iface.IRouter {
+	return &Jt1005{}
 }
-func (UpLinkREQ) Handle(request iface.IRequest) {
+func (Jt1005) Handle(request iface.IRequest) {
 	//心跳回复
 	header := request.GetMsg().(*message.Message).Header
 	header.ID = 0x1006

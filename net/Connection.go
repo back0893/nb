@@ -2,6 +2,8 @@ package net
 
 import (
 	"Nb/iface"
+	"Nb/message"
+	"Nb/message/body"
 	"Nb/utils"
 	"bufio"
 	"fmt"
@@ -116,6 +118,10 @@ func (c *Connection) StartRead() {
 			utils.LoggerObject.Write(err.Error())
 			continue
 		}
+
+		//判断是否登录成功
+		//c.checkLogin(msg)
+
 		request := NewRequest(c, msg)
 		request.SetProperty("sn", sn)
 		if utils.GlobalObject.MaxWorkerSize > 0 {
@@ -127,6 +133,33 @@ func (c *Connection) StartRead() {
 	if !c.IsStop {
 		c.ExitChan <- true
 	}
+}
+func (c *Connection) checkLogin(msg iface.IMessage) bool {
+	if msg.GetId() != 0x1001 {
+		_, ok := c.GetProperty("login")
+		if ok == false {
+			//返回重新登录
+			header := message.MakeHeader(0x1002, []byte{0x01, 0x00, 0x00})
+			if value, ok := c.GetProperty("sn"); ok {
+				header.SN = value.(uint32)
+			} else {
+				header.SN = 1
+			}
+
+			//1002的body回应
+			body_msg := body.NewConnectRsp()
+			body_msg.VerifyCode = 1
+			body_msg.Result = 0x06
+
+			response := &message.Message{
+				Header: header,
+				Body:   body_msg,
+			}
+			c.SendBuffMsg(response)
+			return false
+		}
+	}
+	return true
 }
 func (c *Connection) StartWrite() {
 	for {

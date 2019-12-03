@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -118,7 +119,7 @@ func (protocol *Jt809) Decode(data []byte) (iface.IMessage, error) {
 			return nil, err
 		}
 	}
-	return nil, errors.New("灭有寻找到")
+	return nil, errors.New(fmt.Sprintf("%d灭有寻找到", id))
 }
 
 func (Jt809) Encode(msg iface.IMessage) ([]byte, error) {

@@ -2,6 +2,7 @@ package message
 
 import (
 	"Nb/iface"
+	"Nb/utils"
 	"bytes"
 	"encoding/binary"
 )
@@ -32,6 +33,8 @@ func (body *Body) UnmarshalUn(data []byte) error {
 	if err := binary.Read(buffer, binary.BigEndian, &body.CarNum); err != nil {
 		return err
 	}
+	//将gbk=>utf-8
+	body.CarNum = utils.GlobalObject.ConvertToString(body.CarNum, "gbk", "utf-8")
 	if err := binary.Read(buffer, binary.BigEndian, &body.Color); err != nil {
 		return err
 	}
@@ -49,6 +52,7 @@ func (body *Body) UnmarshalUn(data []byte) error {
 
 func (body *Body) Marshal() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
+	body.CarNum = utils.GlobalObject.ConvertToString(body.CarNum, "utf-8", "gbk")
 	if err := binary.Write(buffer, binary.BigEndian, body.CarNum); err != nil {
 		return nil, err
 	}

@@ -20,6 +20,13 @@ type Header struct {
 	EncryptKey  uint32
 }
 
+func MakeHeader(id uint16, version []byte) *Header {
+	header := NewHeader()
+	header.ID = id
+	header.Version = version
+	return header
+}
+
 func NewHeader() *Header {
 	return &Header{
 		Version: make([]byte, 3, 3),

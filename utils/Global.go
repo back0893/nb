@@ -3,6 +3,7 @@ package utils
 import (
 	"Nb/iface"
 	"encoding/json"
+	"github.com/axgle/mahonia"
 	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"os"
@@ -50,4 +51,12 @@ func (global *Global) Reload() {
 	if err := json.Unmarshal(data, GlobalObject); err != nil {
 		LoggerObject.Write(err.Error())
 	}
+}
+
+func (global *Global) ConvertToString(src []byte, srcCode string, tagCode string) []byte {
+	srcCoder := mahonia.NewDecoder(srcCode)
+	srcResult := srcCoder.ConvertString(string(src))
+	tagCoder := mahonia.NewEncoder(tagCode)
+	cdata := tagCoder.ConvertString(srcResult)
+	return []byte(cdata)
 }
