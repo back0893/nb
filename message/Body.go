@@ -52,7 +52,8 @@ func (body *Body) UnmarshalUn(data []byte) error {
 
 func (body *Body) Marshal() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
-	body.CarNum = utils.GlobalObject.ConvertToString(body.CarNum, "utf-8", "gbk")
+	//这里需要固定长度
+	copy(body.CarNum, utils.GlobalObject.ConvertToString(body.CarNum, "utf-8", "gbk"))
 	if err := binary.Write(buffer, binary.BigEndian, body.CarNum); err != nil {
 		return nil, err
 	}

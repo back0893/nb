@@ -51,7 +51,7 @@ func (msg MsgRegister) Marshal() ([]byte, error) {
 	if err := binary.Read(buffer, binary.BigEndian, &msg.TerminalId); err != nil {
 		return nil, err
 	}
-	msg.Sim = utils.GlobalObject.ConvertToString(msg.Sim, "utf-8", "gbk")
+	copy(msg.Sim, utils.GlobalObject.ConvertToString(msg.Sim, "utf-8", "gbk"))
 	if err := binary.Read(buffer, binary.BigEndian, &msg.Sim); err != nil {
 		return nil, err
 	}

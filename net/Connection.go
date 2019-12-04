@@ -120,7 +120,9 @@ func (c *Connection) StartRead() {
 		}
 
 		//判断是否登录成功
-		//c.checkLogin(msg)
+		if !c.checkLogin(msg) {
+			continue
+		}
 
 		request := NewRequest(c, msg)
 		request.SetProperty("sn", sn)

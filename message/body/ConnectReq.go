@@ -52,11 +52,11 @@ func (req *ConnectReq) Marshal() ([]byte, error) {
 	if err := binary.Write(buffer, binary.BigEndian, req.UserId); err != nil {
 		return nil, err
 	}
-	req.Password = utils.GlobalObject.ConvertToString(req.Password, "utf-8", "gbk")
+	copy(req.Password, utils.GlobalObject.ConvertToString(req.Password, "utf-8", "gbk"))
 	if err := binary.Write(buffer, binary.BigEndian, req.Password); err != nil {
 		return nil, err
 	}
-	req.DownLinkIp = utils.GlobalObject.ConvertToString(req.DownLinkIp, "utf-8", "gbk")
+	copy(req.DownLinkIp, utils.GlobalObject.ConvertToString(req.DownLinkIp, "utf-8", "gbk"))
 	if err := binary.Write(buffer, binary.BigEndian, req.DownLinkIp); err != nil {
 		return nil, err
 	}
